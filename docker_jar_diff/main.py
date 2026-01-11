@@ -99,14 +99,22 @@ class DockerJarDiff:
             # Step 2: Perform directory diff
             print("\nStep 2: 开始对比目录差异...")
 
-            beyond_compare_path = self.config.get('beyond_compare', {}).get('path', "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Beyond Compare 5\\BCompare.exe")
-            try:
-                Utils.launch_beyond_compare_5(extracted_dir1, extracted_dir2, beyond_compare_path)
-            except Exception as e:
-                print(f"❌ 没有成功运行 beyond compare 5 ,请手动运行比较两个镜像文件")
-                print(f"   目录1：{extracted_dir1}")
-                print(f"   目录2：{extracted_dir2}")
-                return -1
+            beyond_compare_path = self.config.get('beyond_compare', {}).get('path', None)
+            if beyond_compare_path:
+                try:
+                    Utils.launch_beyond_compare_5(extracted_dir1, extracted_dir2, beyond_compare_path)
+                    print(f"✅ Beyond Compare 5 已启动，正在比较两个镜像文件")
+                except Exception as e:
+                    print(f"❌ 没有成功运行 Beyond Compare 5，将继续生成差异报告")
+                    print(f"   错误信息：{e}")
+                    print(f"   目录1：{extracted_dir1}")
+                    print(f"   目录2：{extracted_dir2}")
+            else:
+                print(f"ℹ️  未配置 Beyond Compare 5 路径，将直接生成差异报告")
+            
+            # 无论 Beyond Compare 是否成功，都继续生成差异报告
+            diff_result = DiffEngine.diff_directories(extracted_dir1, extracted_dir2, compare_dir)
+            self.html_generator.generate_report(diff_result)
 
             return 0;
             
